@@ -1,6 +1,6 @@
 module github.com/A-pen-app/recommender_sdk
 
-go 1.23.0
+go 1.21
 
 require github.com/A-pen-app/logging v0.4.0
 
