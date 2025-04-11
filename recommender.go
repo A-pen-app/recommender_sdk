@@ -10,7 +10,7 @@ import (
 )
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
-const RecommendStrength float64 = 32.
+const RecommendStrength float64 = 1.
 
 func buildRecommenderURL(userID string) string {
 	url := fmt.Sprintf(recommenderURL, userID)
