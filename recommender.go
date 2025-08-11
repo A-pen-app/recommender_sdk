@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/A-pen-app/cache"
 	"github.com/A-pen-app/logging"
+	"github.com/A-pen-app/recommender_sdk/model"
 )
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
@@ -44,5 +46,22 @@ func GetPostsRecommendScores(ctx context.Context, userID string) (map[string]flo
 	}
 	logging.Debug(ctx, fmt.Sprintf("scores %+v", scores))
 
+	if stickiness := getStickinessScore(ctx, userID); stickiness != nil {
+		for k, v := range stickiness.Scores {
+			scores[k] = scores[k] * v
+		}
+	}
+
 	return scores, nil
+}
+
+func getStickinessScore(ctx context.Context, userID string) *model.StickinessRecommendation {
+	r := model.NewStickinessRecommendation()
+	if err := cache.Get(ctx, "stickiness:"+userID, r); err == nil {
+		return r
+	} else if err != cache.ErrorNotFound {
+		// unexpected error, log down and skip
+		logging.Errorw(ctx, "get user's recommend cache failed", "err", err, "user_id", userID)
+	}
+	return nil
 }
