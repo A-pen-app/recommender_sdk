@@ -48,6 +48,7 @@ func GetPostsRecommendScores(ctx context.Context, userID string) (map[string]flo
 
 	if stickiness := getStickinessScore(ctx, userID); stickiness != nil {
 		for k, v := range stickiness.Scores {
+			println("k, v", k, v)
 			scores[k] = scores[k] * v
 		}
 	}
