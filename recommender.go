@@ -44,10 +44,10 @@ func GetPostsRecommendScores(ctx context.Context, userID string) (map[string]flo
 		logging.Infow(ctx, "recommender error decoding score map", "msg", err)
 		return nil, err
 	}
-	logging.Debug(ctx, fmt.Sprintf("similarity %+v", scores))
+	logging.Infow(ctx, fmt.Sprintf("similarity %+v", scores))
 
 	if stickiness := getStickinessScore(ctx, userID); stickiness != nil {
-		logging.Debug(ctx, fmt.Sprintf("stickiness %+v", stickiness.Scores))
+		logging.Infow(ctx, fmt.Sprintf("stickiness %+v", stickiness.Scores))
 		for k, v := range stickiness.Scores {
 			scores[k] = scores[k] * v
 		}
