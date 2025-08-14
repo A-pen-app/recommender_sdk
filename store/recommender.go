@@ -9,13 +9,13 @@ import (
 	"github.com/A-pen-app/recommender_sdk/model"
 )
 
-func NewStore(q mq.MQ) *Store {
-	return &Store{
+func NewStore(q mq.MQ) *recommendStore {
+	return &recommendStore{
 		q: q,
 	}
 }
 
-type Store struct {
+type recommendStore struct {
 	q mq.MQ
 }
 
@@ -32,8 +32,8 @@ func GetStickinessScore(ctx context.Context, userID string) *model.StickinessRec
 	return nil
 }
 
-func (s *Store) NotifyStickiness(ctx context.Context, userID, postID string) error {
-	if err := s.q.Send(stickiness, &model.RecommendEvent{
+func (r *recommendStore) NotifyStickiness(ctx context.Context, userID, postID string) error {
+	if err := r.q.Send(stickiness, &model.RecommendEvent{
 		UserID: userID,
 		PostID: postID,
 	}); err != nil {
