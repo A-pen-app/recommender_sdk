@@ -8,8 +8,11 @@ import (
 
 	"github.com/A-pen-app/cache"
 	"github.com/A-pen-app/logging"
+	"github.com/A-pen-app/mq/v2"
 	"github.com/A-pen-app/recommender_sdk/model"
 )
+
+const stickiness string = "stickiness"
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
 const RecommendStrength float64 = 1.
@@ -44,10 +47,11 @@ func GetPostsRecommendScores(ctx context.Context, userID string) (map[string]flo
 		logging.Infow(ctx, "recommender error decoding score map", "msg", err)
 		return nil, err
 	}
-	logging.Infow(ctx, fmt.Sprintf("similarity %+v", scores))
+	logging.Debug(ctx, fmt.Sprintf("similarity %+v", scores))
 
 	if stickiness := getStickinessScore(ctx, userID); stickiness != nil {
-		logging.Infow(ctx, fmt.Sprintf("stickiness %+v", stickiness.Scores))
+		logging.Infow(ctx, "stickiness cache retrieved", "score_length", len(stickiness.Scores))
+		logging.Debug(ctx, fmt.Sprintf("stickiness %+v", stickiness.Scores))
 		for k, v := range stickiness.Scores {
 			scores[k] = scores[k] * v
 		}
@@ -58,11 +62,22 @@ func GetPostsRecommendScores(ctx context.Context, userID string) (map[string]flo
 
 func getStickinessScore(ctx context.Context, userID string) *model.StickinessRecommendation {
 	r := model.NewStickinessRecommendation()
-	if err := cache.Get(ctx, "stickiness:"+userID, r); err == nil {
+	if err := cache.Get(ctx, stickiness+":"+userID, r); err == nil {
 		return r
 	} else if err != cache.ErrorNotFound {
 		// unexpected error, log down and skip
 		logging.Errorw(ctx, "get user's recommend cache failed", "err", err, "user_id", userID)
+	}
+	return nil
+}
+
+func NotifyStickiness(ctx context.Context, userID, postID string, mq mq.MQ) error {
+	if err := mq.Send(stickiness, &model.RecommendEvent{
+		UserID: userID,
+		PostID: postID,
+	}); err != nil {
+		logging.Errorw(ctx, "send event failed", "err", err, "user_id", userID, "post_id", postID)
+		return err
 	}
 	return nil
 }
