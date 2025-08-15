@@ -33,6 +33,8 @@ func GetStickinessScore(ctx context.Context, userID string) *model.StickinessRec
 }
 
 func (r *recommendStore) NotifyStickiness(ctx context.Context, userID, postID string) error {
+	logging.Infow(ctx, "stickiness notified on user-post interaction event", "user_id", userID, "post_id", postID)
+
 	if err := r.q.Send(stickiness, &model.RecommendEvent{
 		UserID: userID,
 		PostID: postID,
