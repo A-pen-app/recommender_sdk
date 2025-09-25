@@ -28,6 +28,8 @@ func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights ma
 				candidates[i].AssignWeight(v)
 			}
 		}
+	} else {
+		logging.Debug(ctx, "unable to get recommend weights")
 	}
 	sort.Sort(model.Rankables[T](candidates))
 	return candidates
