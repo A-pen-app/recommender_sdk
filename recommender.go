@@ -22,7 +22,7 @@ func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights *m
 		logging.Debug(ctx, "timeout for getting recommend weights")
 	}
 
-	if weights != nil && *weights != nil {
+	if weights != nil && *weights != nil { // there is a map and the map is not nil
 		logging.Infow(ctx, "assigning recommend scores...")
 		for i, t := range candidates {
 			if v, exists := (*weights)[t.GetID()]; exists {
@@ -37,17 +37,17 @@ func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights *m
 }
 
 func GetWeights(ctx context.Context, userID string) (<-chan struct{}, *map[string]float64) {
-	var weights map[string]float64 = nil
+	var weights *map[string]float64
 	ctx, cancel := context.WithCancel(ctx)
 	go func() {
 		defer cancel()
 		if w, err := GetPostsRecommendWeights(ctx, userID); err != nil {
 			logging.Infow(ctx, "failed getting recommendation weights", "err", err)
 		} else {
-			weights = w
+			weights = &w
 		}
 	}()
-	return ctx.Done(), &weights
+	return ctx.Done(), weights
 }
 
 func buildRecommenderURL(userID string) string {
