@@ -5,19 +5,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/A-pen-app/logging"
+	"github.com/A-pen-app/recommender_sdk/model"
 	"github.com/A-pen-app/recommender_sdk/store"
 )
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
+
+func Recommend[T model.Rankable](candidates []T) []T {
+	sort.Sort(model.Rankables[T](candidates))
+	return candidates
+}
 
 func buildRecommenderURL(userID string) string {
 	url := fmt.Sprintf(recommenderURL, userID)
 	return url
 }
 
-func GetPostsRecommendScores(ctx context.Context, userID string) (map[string]float64, error) {
+func GetPostsRecommendWeights(ctx context.Context, userID string) (map[string]float64, error) {
 	url := buildRecommenderURL(userID)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
