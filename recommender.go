@@ -14,11 +14,13 @@ import (
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
 
-func Recommend[T model.Rankable](ctx context.Context, candidates []T, weightMap map[string]float64) []T {
-	logging.Infow(ctx, "assigning recommend scores...")
-	for i, t := range candidates {
-		if v, exists := weightMap[t.GetID()]; exists {
-			candidates[i].AssignWeight(v)
+func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights map[string]float64) []T {
+	if weights != nil {
+		logging.Infow(ctx, "assigning recommend scores...")
+		for i, t := range candidates {
+			if v, exists := weights[t.GetID()]; exists {
+				candidates[i].AssignWeight(v)
+			}
 		}
 	}
 	sort.Sort(model.Rankables[T](candidates))
