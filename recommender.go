@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"time"
 
 	"github.com/A-pen-app/logging"
 	"github.com/A-pen-app/recommender_sdk/model"
@@ -14,7 +15,12 @@ import (
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
 
-func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights map[string]float64) []T {
+func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights map[string]float64, done <-chan struct{}, deadline time.Duration) []T {
+	select {
+	case <-done:
+	case <-time.After(deadline):
+	}
+
 	if weights != nil {
 		logging.Infow(ctx, "assigning recommend scores...")
 		for i, t := range candidates {
