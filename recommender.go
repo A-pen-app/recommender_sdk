@@ -15,17 +15,17 @@ import (
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
 
-func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights map[string]float64, done <-chan struct{}, deadline time.Duration) []T {
+func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights *map[string]float64, done <-chan struct{}, deadline time.Duration) []T {
 	select {
 	case <-done:
 	case <-time.After(deadline):
 		logging.Debug(ctx, "timeout for getting recommend weights")
 	}
 
-	if weights != nil {
+	if weights != nil && *weights != nil {
 		logging.Infow(ctx, "assigning recommend scores...")
 		for i, t := range candidates {
-			if v, exists := weights[t.GetID()]; exists {
+			if v, exists := (*weights)[t.GetID()]; exists {
 				candidates[i].AssignWeight(v)
 			}
 		}
@@ -36,7 +36,7 @@ func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights ma
 	return candidates
 }
 
-func GetWeights(ctx context.Context, userID string) (<-chan struct{}, map[string]float64) {
+func GetWeights(ctx context.Context, userID string) (<-chan struct{}, *map[string]float64) {
 	var weights map[string]float64 = nil
 	ctx, cancel := context.WithCancel(ctx)
 	go func() {
@@ -47,7 +47,7 @@ func GetWeights(ctx context.Context, userID string) (<-chan struct{}, map[string
 			weights = w
 		}
 	}()
-	return ctx.Done(), weights
+	return ctx.Done(), &weights
 }
 
 func buildRecommenderURL(userID string) string {
