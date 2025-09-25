@@ -15,39 +15,38 @@ import (
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
 
-func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights *map[string]float64, done <-chan struct{}, deadline time.Duration) []T {
+func Recommend[T model.Rankable](ctx context.Context, candidates []T, weightCh <-chan map[string]float64, deadline time.Duration) []T {
+	var weights map[string]float64
 	select {
-	case <-done:
+	case weights = <-weightCh:
 	case <-time.After(deadline):
-		logging.Debug(ctx, "timeout for getting recommend weights")
+		logging.Debug(ctx, "timeout for getting weights")
 	}
 
-	if weights != nil && *weights != nil { // there is a map and the map is not nil
-		logging.Infow(ctx, "assigning recommend scores...")
+	if weights != nil { // there is a map and the map is not nil
+		logging.Infow(ctx, "assigning weights...")
 		for i, t := range candidates {
-			if v, exists := (*weights)[t.GetID()]; exists {
+			if v, exists := weights[t.GetID()]; exists {
 				candidates[i].AssignWeight(v)
 			}
 		}
 	} else {
-		logging.Debug(ctx, "unable to get recommend weights")
+		logging.Debug(ctx, "unable to get weights")
 	}
 	sort.Sort(model.Rankables[T](candidates))
 	return candidates
 }
 
-func GetPostWeights(ctx context.Context, userID string) (<-chan struct{}, *map[string]float64) {
-	var weights *map[string]float64
-	ctx, cancel := context.WithCancel(ctx)
+func GetWeights(ctx context.Context, userID string) <-chan map[string]float64 {
+	ch := make(chan map[string]float64, 1)
 	go func() {
-		defer cancel()
-		if w, err := getPostWeights(ctx, userID); err != nil {
-			logging.Infow(ctx, "failed getting recommendation weights", "err", err)
+		if w, err := getWeights(ctx, userID); err != nil {
+			logging.Infow(ctx, "failed getting weights", "err", err)
 		} else {
-			weights = &w
+			ch <- w
 		}
 	}()
-	return ctx.Done(), weights
+	return ch
 }
 
 func buildRecommenderURL(userID string) string {
@@ -55,7 +54,7 @@ func buildRecommenderURL(userID string) string {
 	return url
 }
 
-func getPostWeights(ctx context.Context, userID string) (map[string]float64, error) {
+func getWeights(ctx context.Context, userID string) (map[string]float64, error) {
 	url := buildRecommenderURL(userID)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
