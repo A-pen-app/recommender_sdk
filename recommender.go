@@ -19,6 +19,7 @@ func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights ma
 	select {
 	case <-done:
 	case <-time.After(deadline):
+		logging.Debug(ctx, "timeout for getting recommend weights")
 	}
 
 	if weights != nil {
