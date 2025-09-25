@@ -27,6 +27,20 @@ func Recommend[T model.Rankable](ctx context.Context, candidates []T, weights ma
 	return candidates
 }
 
+func GetWeights(ctx context.Context, userID string) (<-chan struct{}, map[string]float64) {
+	var weights map[string]float64 = nil
+	ctx, cancel := context.WithCancel(ctx)
+	go func() {
+		defer cancel()
+		if w, err := GetPostsRecommendWeights(ctx, userID); err != nil {
+			logging.Infow(ctx, "failed getting recommendation weights", "err", err)
+		} else {
+			weights = w
+		}
+	}()
+	return ctx.Done(), weights
+}
+
 func buildRecommenderURL(userID string) string {
 	url := fmt.Sprintf(recommenderURL, userID)
 	return url
