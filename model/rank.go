@@ -11,6 +11,7 @@ type Rankable interface {
 	GetCommentsCount() int
 	GetCreatedAt() int64
 	GetRecommendWeight() float64
+	AssignWeight(float64)
 }
 
 type Rankables[T Rankable] []T
@@ -25,7 +26,7 @@ func postScore(p Rankable) float64 {
 	now := time.Now().Unix()
 	score := float64(p.GetUpvote()/2+p.GetCommentsCount()) /
 		math.Pow(float64(now-p.GetCreatedAt())/3600+2, 1.5)
-	if p.GetRecommendWeight() != 0 {
+	if p.GetRecommendWeight() != 0. {
 		score *= p.GetRecommendWeight()
 	}
 	return score
