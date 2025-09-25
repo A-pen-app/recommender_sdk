@@ -6,7 +6,7 @@ import (
 )
 
 type Rankable interface {
-	GetID()
+	GetID() string
 	GetUpvote() int
 	GetCommentsCount() int
 	GetCreatedAt() int64
