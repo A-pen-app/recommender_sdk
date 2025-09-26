@@ -43,13 +43,14 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) []T {
 	case <-time.After(r.timeout):
 		logging.Debug(ctx, "timeout for getting weights")
 	}
-	weights["6c38770c-e187-40ec-8255-fffb66249a75"] = 1000.0
 
 	if weights != nil { // there is a map and the map is not nil
+		weights["6c38770c-e187-40ec-8255-fffb66249a75"] = 10000
+		weights["e125533d-96c3-4d8f-b356-7b172f75fcc2"] = 10000
 		logging.Infow(ctx, "assigning weights...")
-		for i, t := range candidates {
+		for _, t := range candidates {
 			if v, exists := weights[t.GetID()]; exists {
-				if w := candidates[i].GetWeight(); w != nil {
+				if w := t.GetWeight(); w != nil {
 					*w = v
 					logging.Debug(ctx, fmt.Sprintf("assigned weight %f to %s", *t.GetWeight(), t.GetID()))
 				}
