@@ -49,11 +49,12 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) []T {
 		logging.Infow(ctx, "assigning weights...")
 		for i, t := range candidates {
 			if v, exists := weights[t.GetID()]; exists {
-				candidates[i].AssignWeight(v)
+				if w := candidates[i].GetWeight(); w != nil {
+					*w = v
+					logging.Debug(ctx, fmt.Sprintf("assigned weight %f to %s", *t.GetWeight(), t.GetID()))
+				}
 			}
 		}
-	} else {
-		logging.Debug(ctx, "unable to get weights")
 	}
 	sort.Sort(model.Rankables[T](candidates))
 	return candidates

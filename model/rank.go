@@ -12,8 +12,7 @@ type Rankable interface {
 	GetShareCount() int
 	GetFavoriteCount() int
 	GetCreatedAt() int64
-	GetRecommendWeight() float64
-	AssignWeight(float64)
+	GetWeight() *float64
 }
 
 type Rankables[T Rankable] []T
@@ -28,8 +27,8 @@ func postScore(p Rankable) float64 {
 	now := time.Now().Unix()
 	score := float64(p.GetUpvote()/2+p.GetCommentsCount()+p.GetFavoriteCount()+p.GetShareCount()) /
 		math.Pow(float64(now-p.GetCreatedAt())/3600+2, 1.5)
-	if p.GetRecommendWeight() != 0. {
-		score *= p.GetRecommendWeight()
+	if w := p.GetWeight(); w != nil && *w != 0. {
+		score *= *w
 	}
 	return score
 }
