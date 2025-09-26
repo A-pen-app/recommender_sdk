@@ -45,7 +45,7 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 	}
 
 	if weights != nil { // there is a map and the map is not nil
-		// weights["6c38770c-e187-40ec-8255-fffb66249a75"] = 10000
+		weights["6c38770c-e187-40ec-8255-fffb66249a75"] = 10000
 		logging.Debug(ctx, "assigning weights...")
 		for _, t := range candidates {
 			if w, exists := weights[t.GetID()]; exists {
