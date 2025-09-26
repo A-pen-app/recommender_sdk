@@ -47,10 +47,10 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 	if weights != nil { // there is a map and the map is not nil
 		weights["6c38770c-e187-40ec-8255-fffb66249a75"] = 10000
 		logging.Infow(ctx, "assigning weights...")
-		for _, t := range candidates {
+		for i, t := range candidates {
 			if w, exists := weights[t.GetID()]; exists && w != 0. {
-				*t.GetWeight() = w
-				logging.Debug(ctx, fmt.Sprintf("[%f] assigned weight %f to %s", w, *t.GetWeight(), t.GetID()))
+				*candidates[i].GetWeight() = w
+				logging.Debug(ctx, fmt.Sprintf("[%f] assigned weight %f to %s", w, *candidates[i].GetWeight(), t.GetID()))
 			}
 		}
 	}
