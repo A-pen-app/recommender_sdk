@@ -15,11 +15,11 @@ import (
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
 
-func Recommend[T model.Rankable](ctx context.Context, candidates []T, weightCh <-chan map[string]float64, deadline time.Duration) []T {
+func Recommend[T model.Rankable](ctx context.Context, candidates []T, weightCh <-chan map[string]float64) []T {
 	var weights map[string]float64
 	select {
 	case weights = <-weightCh:
-	case <-time.After(deadline):
+	case <-time.After(time.Second * 2):
 		logging.Debug(ctx, "timeout for getting weights")
 	}
 
