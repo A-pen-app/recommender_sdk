@@ -36,7 +36,7 @@ func NewRecommender[T model.Rankable](ctx context.Context, userID string) *Recom
 	return recommender
 }
 
-func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) []T {
+func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 	var weights map[string]float64
 	select {
 	case weights = <-r.weightCh:
@@ -58,7 +58,6 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) []T {
 		}
 	}
 	sort.Sort(model.Rankables[T](candidates))
-	return candidates
 }
 
 func buildRecommenderURL(userID string) string {
