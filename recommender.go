@@ -15,11 +15,32 @@ import (
 
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
 
-func Recommend[T model.Rankable](ctx context.Context, candidates []T, weightCh <-chan map[string]float64) []T {
+type Recommender[T model.Rankable] struct {
+	weightCh <-chan map[string]float64
+	timeout  time.Duration
+}
+
+func NewRecommender[T model.Rankable](ctx context.Context, userID string) *Recommender[T] {
+	ch := make(chan map[string]float64, 1)
+	recommender := &Recommender[T]{
+		weightCh: ch,
+		timeout:  time.Second * 2,
+	}
+	go func() {
+		if w, err := getWeights(ctx, userID); err != nil {
+			logging.Infow(ctx, "failed getting weights", "err", err)
+		} else {
+			ch <- w
+		}
+	}()
+	return recommender
+}
+
+func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) []T {
 	var weights map[string]float64
 	select {
-	case weights = <-weightCh:
-	case <-time.After(time.Second * 2):
+	case weights = <-r.weightCh:
+	case <-time.After(r.timeout):
 		logging.Debug(ctx, "timeout for getting weights")
 	}
 
@@ -35,18 +56,6 @@ func Recommend[T model.Rankable](ctx context.Context, candidates []T, weightCh <
 	}
 	sort.Sort(model.Rankables[T](candidates))
 	return candidates
-}
-
-func GetWeights(ctx context.Context, userID string) <-chan map[string]float64 {
-	ch := make(chan map[string]float64, 1)
-	go func() {
-		if w, err := getWeights(ctx, userID); err != nil {
-			logging.Infow(ctx, "failed getting weights", "err", err)
-		} else {
-			ch <- w
-		}
-	}()
-	return ch
 }
 
 func buildRecommenderURL(userID string) string {
