@@ -51,12 +51,8 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 		logging.Infow(ctx, "assigning weights...")
 		for _, t := range candidates {
 			if v, exists := weights[t.GetID()]; exists {
-				if w := t.GetWeight(); w != nil && *w != 0. {
-					*w = v
-					logging.Debug(ctx, fmt.Sprintf("assigned weight %f to %s", *t.GetWeight(), t.GetID()))
-				} else {
-					logging.Debug(ctx, fmt.Sprintf("no weight assigned to %s", t.GetID()))
-				}
+				*t.GetWeight() = v
+				logging.Debug(ctx, fmt.Sprintf("assigned weight %f to %s", *t.GetWeight(), t.GetID()))
 			}
 		}
 	}
