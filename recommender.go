@@ -53,6 +53,8 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 				if w := t.GetWeight(); w != nil && *w != 0. {
 					*w = v
 					logging.Debug(ctx, fmt.Sprintf("assigned weight %f to %s", *t.GetWeight(), t.GetID()))
+				} else {
+					logging.Debug(ctx, fmt.Sprintf("no weight assigned to %s", t.GetID()))
 				}
 			}
 		}
