@@ -7,16 +7,19 @@ import (
 	"github.com/A-pen-app/logging"
 	"github.com/A-pen-app/mq/v2"
 	"github.com/A-pen-app/recommender_sdk/model"
+	"github.com/jmoiron/sqlx"
 )
 
-func NewStore(q mq.MQ) *recommendStore {
+func NewStore(q mq.MQ, db *sqlx.DB) *recommendStore {
 	return &recommendStore{
-		q: q,
+		q:  q,
+		db: db,
 	}
 }
 
 type recommendStore struct {
-	q mq.MQ
+	q  mq.MQ
+	db *sqlx.DB
 }
 
 const stickiness string = "stickiness"
