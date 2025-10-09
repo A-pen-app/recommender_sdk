@@ -26,7 +26,7 @@ func (a Rankables[T]) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func postScore(p Rankable) float64 {
 	now := time.Now().Unix()
 	score := float64(p.GetUpvote()/2+p.GetCommentsCount()+p.GetFavoriteCount()+p.GetShareCount()) /
-		math.Pow(float64(now-p.GetCreatedAt())/3600+2, 1.5)
+		math.Pow(float64(now-p.GetCreatedAt())/3600+2, 1.8)
 	if w := p.GetWeight(); w != nil && *w != 0. {
 		score *= *w
 	}
