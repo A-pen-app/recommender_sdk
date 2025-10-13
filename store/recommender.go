@@ -15,14 +15,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func NewStore(q mq.MQ, db *sqlx.DB) *recommendStore {
-	return &recommendStore{
+func NewStore[T model.Rankable](q mq.MQ, db *sqlx.DB) *recommendStore[T] {
+	return &recommendStore[T]{
 		q:  q,
 		db: db,
 	}
 }
 
-type recommendStore struct {
+type recommendStore[T model.Rankable] struct {
 	q  mq.MQ
 	db *sqlx.DB
 }
@@ -40,7 +40,7 @@ func GetStickinessScore(ctx context.Context, userID string) *model.StickinessRec
 	return nil
 }
 
-func (r *recommendStore) NotifyStickiness(ctx context.Context, userID, postID string) error {
+func (r *recommendStore[T]) NotifyStickiness(ctx context.Context, userID, postID string) error {
 	logging.Infow(ctx, "stickiness notified on user-post interaction event", "user_id", userID, "post_id", postID)
 
 	if err := r.q.Send(stickiness, &model.RecommendEvent{
@@ -62,7 +62,7 @@ type Recommender[T model.Rankable] struct {
 	timeout  time.Duration
 }
 
-func NewRecommender[T model.Rankable](ctx context.Context, userID string) *Recommender[T] {
+func (r *recommendStore[T]) NewRecommender(ctx context.Context, userID string) *Recommender[T] {
 	ch := make(chan map[string]float64, 1)
 	recommender := &Recommender[T]{
 		weightCh: ch,
