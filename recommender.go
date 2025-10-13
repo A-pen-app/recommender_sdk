@@ -66,6 +66,7 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 	for _, t := range candidates {
 		id := t.GetID()
 		if !t.GetIsAnnonymous() {
+			logging.Debug(ctx, fmt.Sprintf("[%s] is not annonymous", id))
 			if w, exists := weights[id]; exists {
 				weights[id] = w * nonAnnonymousFactor
 			} else {
