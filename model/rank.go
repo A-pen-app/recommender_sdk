@@ -13,6 +13,7 @@ type Rankable interface {
 	GetFavoriteCount() int
 	GetCreatedAt() int64
 	GetWeight() *float64
+	GetIsAnnonymous() bool
 }
 
 type Rankables[T Rankable] []T

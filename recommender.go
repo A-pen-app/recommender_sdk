@@ -13,6 +13,8 @@ import (
 	"github.com/A-pen-app/recommender_sdk/store"
 )
 
+var nonAnnonymousFactor float64 = 2.
+
 const recommenderURL string = "https://recommender-490242039522.asia-east1.run.app/recommendations/%s"
 
 type Recommender[T model.Rankable] struct {
@@ -38,6 +40,7 @@ func NewRecommender[T model.Rankable](ctx context.Context, userID string) *Recom
 
 func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 	var weights map[string]float64
+
 	select {
 	case weights = <-r.weightCh:
 	case <-time.After(r.timeout):
@@ -56,6 +59,21 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 			}
 		}
 	}
+
+	// add rule based approach
+
+	// boost non-annonymous posts
+	for _, t := range candidates {
+		id := t.GetID()
+		if !t.GetIsAnnonymous() {
+			if w, exists := weights[id]; exists {
+				weights[id] = w * nonAnnonymousFactor
+			} else {
+				*t.GetWeight() = nonAnnonymousFactor
+			}
+		}
+	}
+
 	sort.Sort(model.Rankables[T](candidates))
 }
 
@@ -98,6 +116,9 @@ func getWeights(ctx context.Context, userID string) (map[string]float64, error) 
 			scores[k] = scores[k] * v
 		}
 	}
+
+	// rule base approach
+	// if
 
 	return scores, nil
 }
