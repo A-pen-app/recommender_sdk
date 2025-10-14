@@ -104,7 +104,7 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 	// boost non-annonymous posts
 	for _, t := range candidates {
 		id := t.GetID()
-		if !t.GetIsAnnonymous() {
+		if !t.GetIsAnonymous() {
 			// logging.Debug(ctx, fmt.Sprintf("[%s] is not annonymous", id))
 			if w, exists := weights[id]; exists {
 				weights[id] = w * nonAnnonymousFactor
