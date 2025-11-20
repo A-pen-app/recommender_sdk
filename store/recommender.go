@@ -51,21 +51,10 @@ func (r *recommendStore[T]) NotifyStickiness(ctx context.Context, userID, postID
 
 const nonAnnonymousFactor float64 = 2.
 
-type Recommender[T model.Rankable] struct {
-	resolver recommendStore[T]
-}
-
-func (r *recommendStore[T]) NewRecommender(ctx context.Context, userID string, resolver recommendStore[T]) *Recommender[T] {
-	recommender := &Recommender[T]{
-		resolver: resolver,
-	}
-	return recommender
-}
-
-func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
+func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T) {
 	var weights map[string]float64 = make(map[string]float64)
 
-	blacklistIDs, err := r.resolver.GetBlacklistedUserIDs(ctx)
+	blacklistIDs, err := r.GetBlacklistedUserIDs(ctx)
 	if err != nil {
 		logging.Errorw(ctx, "failed to get user blacklist", "err", err)
 	}
