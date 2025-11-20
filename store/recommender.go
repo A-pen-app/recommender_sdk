@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"time"
 
@@ -65,11 +64,7 @@ func (r *recommendStore[T]) NewRecommender(ctx context.Context, userID string) *
 		timeout:  time.Second * 2,
 	}
 	go func() {
-		if w, err := getWeights(ctx, userID); err != nil {
-			logging.Infow(ctx, "failed getting weights", "err", err)
-		} else {
-			ch <- w
-		}
+		ch <- make(map[string]float64)
 	}()
 	return recommender
 }
@@ -111,18 +106,4 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 	}
 
 	sort.Sort(model.Rankables[T](candidates))
-}
-
-func getWeights(ctx context.Context, userID string) (map[string]float64, error) {
-	var scores map[string]float64 = make(map[string]float64)
-
-	if stickiness := GetStickinessScore(ctx, userID); stickiness != nil {
-		logging.Infow(ctx, "stickiness cache retrieved", "score_length", len(stickiness.Scores))
-		logging.Debug(ctx, fmt.Sprintf("stickiness %+v", stickiness.Scores))
-		for k, v := range stickiness.Scores {
-			scores[k] = scores[k] * v
-		}
-	}
-
-	return scores, nil
 }
