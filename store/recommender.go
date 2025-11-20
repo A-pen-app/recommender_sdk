@@ -51,7 +51,7 @@ func (r *recommendStore[T]) NotifyStickiness(ctx context.Context, userID, postID
 
 const nonAnnonymousFactor float64 = 2.
 
-func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T) {
+func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userID string) {
 	var weights map[string]float64 = make(map[string]float64)
 
 	blacklistIDs, err := r.GetBlacklistedUserIDs(ctx)
