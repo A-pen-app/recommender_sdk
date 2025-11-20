@@ -8,5 +8,4 @@ import (
 
 type RecommendStore[T model.Rankable] interface {
 	NotifyStickiness(ctx context.Context, userID, postID string) error
-	NewRecommender(ctx context.Context, userID string) *Recommender[T]
 }
