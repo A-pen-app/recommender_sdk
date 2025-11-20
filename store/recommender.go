@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"sort"
-	"time"
 
 	"github.com/A-pen-app/cache"
 	"github.com/A-pen-app/logging"
@@ -53,49 +52,32 @@ func (r *recommendStore[T]) NotifyStickiness(ctx context.Context, userID, postID
 const nonAnnonymousFactor float64 = 2.
 
 type Recommender[T model.Rankable] struct {
-	weightCh <-chan map[string]float64
-	timeout  time.Duration
+	resolver recommendStore[T]
 }
 
-func (r *recommendStore[T]) NewRecommender(ctx context.Context, userID string) *Recommender[T] {
-	ch := make(chan map[string]float64, 1)
+func (r *recommendStore[T]) NewRecommender(ctx context.Context, userID string, resolver recommendStore[T]) *Recommender[T] {
 	recommender := &Recommender[T]{
-		weightCh: ch,
-		timeout:  time.Second * 2,
+		resolver: resolver,
 	}
-	go func() {
-		ch <- make(map[string]float64)
-	}()
 	return recommender
 }
 
 func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
-	var weights map[string]float64
+	var weights map[string]float64 = make(map[string]float64)
 
-	select {
-	case weights = <-r.weightCh:
-	case <-time.After(r.timeout):
-		logging.Debug(ctx, "timeout for getting weights")
+	blacklistIDs, err := r.resolver.GetBlacklistedUserIDs(ctx)
+	if err != nil {
+		logging.Errorw(ctx, "failed to get user blacklist", "err", err)
+	}
+	blacklistMap := make(map[string]struct{})
+	for _, id := range blacklistIDs {
+		blacklistMap[id] = struct{}{}
 	}
 
-	if weights != nil { // there is a map and the map is not nil
-		// weights["6c38770c-e187-40ec-8255-fffb66249a75"] = 10000
-		logging.Debug(ctx, "assigning weights...")
-		for _, t := range candidates {
-			if w, exists := weights[t.GetID()]; exists {
-				*t.GetWeight() = w
-				// if *t.GetWeight() != 0 {
-				// 	logging.Debug(ctx, fmt.Sprintf("[%f] assigned weight %f to %s", w, *t.GetWeight(), t.GetID()))
-				// }
-			}
-		}
-	}
-
-	// add rule based approach
-	// boost non-annonymous posts
+	// boost non-annonymous posts whose authors are not in blacklist
 	for _, t := range candidates {
 		id := t.GetID()
-		if !t.GetIsAnonymous() {
+		if _, exist := blacklistMap[id]; !exist && !t.GetIsAnonymous() {
 			// logging.Debug(ctx, fmt.Sprintf("[%s] is not annonymous", id))
 			if w, exists := weights[id]; exists {
 				weights[id] = w * nonAnnonymousFactor
@@ -106,4 +88,22 @@ func (r *Recommender[T]) Recommend(ctx context.Context, candidates []T) {
 	}
 
 	sort.Sort(model.Rankables[T](candidates))
+}
+
+func (r *recommendStore[T]) GetBlacklistedUserIDs(ctx context.Context) ([]string, error) {
+	var userIDs []string
+
+	if err := r.db.Select(
+		&userIDs,
+		`
+		SELECT
+			user_id
+		FROM
+			feed_user_blacklist
+		`,
+	); err != nil {
+		return nil, err
+	}
+
+	return userIDs, nil
 }
