@@ -1,8 +1,11 @@
 package model
 
 import (
+	"context"
 	"math"
 	"time"
+
+	"github.com/A-pen-app/logging"
 )
 
 type Rankable interface {
@@ -30,6 +33,9 @@ func postScore(p Rankable) float64 {
 	score := float64(p.GetUpvote()/2+p.GetCommentsCount()+p.GetFavoriteCount()+p.GetShareCount()) /
 		math.Pow(float64(now-p.GetCreatedAt())/3600+2, 2)
 	if w := p.GetWeight(); w != nil && *w != 0. {
+		if *w > 1000. {
+			logging.Debug(context.Background(), "highly boosted recommendation weight", p.GetID(), *p.GetWeight())
+		}
 		score *= *w
 	}
 	return score
