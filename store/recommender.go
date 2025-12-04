@@ -50,6 +50,7 @@ func (r *recommendStore[T]) NotifyStickiness(ctx context.Context, userID, postID
 }
 
 const nonAnnonymousFactor float64 = 2.
+const girlFactor float64 = 4.
 
 func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userID string) {
 	var weights map[string]float64 = make(map[string]float64)
@@ -66,12 +67,13 @@ func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userI
 	// boost non-annonymous posts whose authors are not in blacklist
 	for _, t := range candidates {
 		id := t.GetID()
-		if _, exist := blacklistMap[id]; !exist && !t.GetIsAnonymous() {
-			// logging.Debug(ctx, fmt.Sprintf("[%s] is not annonymous", id))
-			if w, exists := weights[id]; exists {
-				weights[id] = w * nonAnnonymousFactor
-			} else {
-				*t.GetWeight() = nonAnnonymousFactor
+		if _, exist := blacklistMap[id]; !exist {
+			if !t.GetIsAnonymous() {
+				*t.GetWeight() = max(nonAnnonymousFactor, weights[id]*nonAnnonymousFactor)
+			}
+			gender := t.GetGender()
+			if gender != nil && *gender == "Female" {
+				*t.GetWeight() = max(girlFactor, weights[id]*girlFactor)
 			}
 		}
 	}

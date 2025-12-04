@@ -14,6 +14,7 @@ type Rankable interface {
 	GetCreatedAt() int64
 	GetWeight() *float64
 	GetIsAnonymous() bool
+	GetGender() *string
 }
 
 type Rankables[T Rankable] []T
