@@ -72,7 +72,9 @@ func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userI
 				*t.GetWeight() = max(nonAnnonymousFactor, weights[id]*nonAnnonymousFactor)
 			}
 			if t.GetGender() == "Female" {
+				logging.Debug(context.Background(), "boosting female posts", t.GetID(), *t.GetWeight())
 				*t.GetWeight() = max(femaleFactor, weights[id]*femaleFactor)
+				logging.Debug(context.Background(), "female posts boosted", t.GetID(), *t.GetWeight())
 			}
 		}
 	}
