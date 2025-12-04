@@ -74,8 +74,9 @@ func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userI
 			gender := t.GetGender()
 			logging.Debug(ctx, "post gender", gender)
 			if gender != nil && *gender == "Female" {
-				logging.Debug(ctx, "female post boost", id)
+				logging.Debug(ctx, "female post boost", id, *t.GetWeight())
 				*t.GetWeight() = max(girlFactor, weights[id]*girlFactor)
+				logging.Debug(ctx, "weight boosted", id, *t.GetWeight())
 			}
 		}
 	}
