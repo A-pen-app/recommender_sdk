@@ -50,7 +50,7 @@ func (r *recommendStore[T]) NotifyStickiness(ctx context.Context, userID, postID
 }
 
 const nonAnnonymousFactor float64 = 2.
-const girlFactor float64 = 4.
+const girlFactor float64 = 100000000.
 
 func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userID string) {
 	var weights map[string]float64 = make(map[string]float64)
