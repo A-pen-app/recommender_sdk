@@ -55,27 +55,13 @@ const femaleFactor float64 = 4.
 func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userID string) {
 	var weights map[string]float64 = make(map[string]float64)
 
-	blacklistIDs, err := r.GetBlacklistedUserIDs(ctx)
-	if err != nil {
-		logging.Errorw(ctx, "failed to get user blacklist", "err", err)
-	}
-	blacklistMap := make(map[string]struct{})
-	for _, id := range blacklistIDs {
-		blacklistMap[id] = struct{}{}
-	}
-
-	// boost non-annonymous posts whose authors are not in blacklist
 	for _, t := range candidates {
 		id := t.GetID()
-		if _, exist := blacklistMap[id]; !exist {
-			if !t.GetIsAnonymous() {
-				*t.GetWeight() = max(nonAnnonymousFactor, weights[id]*nonAnnonymousFactor)
-			}
-			if t.GetGender() == "Female" {
-				// logging.Debug(context.Background(), "boosting female posts", t.GetID(), *t.GetWeight())
-				*t.GetWeight() = max(femaleFactor, weights[id]*femaleFactor)
-				// logging.Debug(context.Background(), "female posts boosted", t.GetID(), *t.GetWeight())
-			}
+		if !t.GetIsAnonymous() {
+			*t.GetWeight() = max(nonAnnonymousFactor, weights[id]*nonAnnonymousFactor)
+		}
+		if t.GetGender() == "Female" {
+			*t.GetWeight() = max(femaleFactor, weights[id]*femaleFactor)
 		}
 	}
 
