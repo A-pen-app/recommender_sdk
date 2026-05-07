@@ -67,21 +67,3 @@ func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userI
 
 	sort.Sort(model.Rankables[T](candidates))
 }
-
-func (r *recommendStore[T]) GetBlacklistedUserIDs(ctx context.Context) ([]string, error) {
-	var userIDs []string
-
-	if err := r.db.Select(
-		&userIDs,
-		`
-		SELECT
-			user_id
-		FROM
-			feed_user_blacklist
-		`,
-	); err != nil {
-		return nil, err
-	}
-
-	return userIDs, nil
-}
