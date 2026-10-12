@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"sort"
 
 	"github.com/A-pen-app/cache"
 	"github.com/A-pen-app/logging"
@@ -49,21 +48,30 @@ func (r *recommendStore[T]) NotifyStickiness(ctx context.Context, userID, postID
 	return nil
 }
 
-const nonAnnonymousFactor float64 = 2.
-const femaleFactor float64 = 4.
-
-func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userID string) {
-	var weights map[string]float64 = make(map[string]float64)
+// Recommend writes each candidate's weight and sorts the slice in place by
+// descending score. With no opts it behaves exactly as the fixed-constant
+// version did; see model.Options for what can be tuned.
+func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userID string, opts ...model.Option) {
+	o := model.ApplyOptions(opts...)
 
 	for _, t := range candidates {
-		id := t.GetID()
-		if !t.GetIsAnonymous() {
-			*t.GetWeight() = max(nonAnnonymousFactor, weights[id]*nonAnnonymousFactor)
-		}
-		if t.GetGender() == "Female" {
-			*t.GetWeight() = max(femaleFactor, weights[id]*femaleFactor)
-		}
+		*t.GetWeight() = identityWeight(t, o)
 	}
 
-	sort.Sort(model.Rankables[T](candidates))
+	model.Rankables[T](candidates).Sort(o)
+}
+
+// identityWeight reproduces the historical author-identity weighting: a
+// female author gets FemaleFactor, otherwise a non-anonymous author gets
+// NonAnonymousFactor, otherwise the item is unweighted (0 == ×1 in Score).
+// The factors replace rather than stack, as before.
+func identityWeight[T model.Rankable](t T, o model.Options) float64 {
+	switch {
+	case t.GetGender() == "Female":
+		return o.FemaleFactor
+	case !t.GetIsAnonymous():
+		return o.NonAnonymousFactor
+	default:
+		return 0.
+	}
 }
