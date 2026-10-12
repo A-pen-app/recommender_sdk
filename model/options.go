@@ -25,6 +25,10 @@ type Options struct {
 	// WatchScoreCap bounds the watch points of a single item; 0 means no cap.
 	// Historically there was none.
 	WatchScoreCap float64
+	// Weights are per-item multipliers keyed by GetID(), e.g. the viewer's own
+	// interaction history with that item. They stack multiplicatively on the
+	// identity factors above. Missing or non-positive entries mean ×1.
+	Weights map[string]float64
 
 	now time.Time
 }
@@ -97,6 +101,10 @@ func WithWatchSecondsDivisor(n int) Option { return func(o *Options) { o.WatchSe
 
 // WithWatchScoreCap bounds the watch points of one item; 0 removes the cap.
 func WithWatchScoreCap(cap float64) Option { return func(o *Options) { o.WatchScoreCap = cap } }
+
+// WithWeights supplies per-item multipliers keyed by GetID(). The map is read,
+// never written.
+func WithWeights(w map[string]float64) Option { return func(o *Options) { o.Weights = w } }
 
 // WithNow pins the reference time; tests use it, callers normally do not.
 func WithNow(t time.Time) Option { return func(o *Options) { o.now = t } }

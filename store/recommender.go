@@ -48,14 +48,22 @@ func (r *recommendStore[T]) NotifyStickiness(ctx context.Context, userID, postID
 	return nil
 }
 
-// Recommend writes each candidate's weight and sorts the slice in place by
-// descending score. With no opts it behaves exactly as the fixed-constant
+// Recommend writes each candidate's weight — the author-identity factor times
+// any per-item multiplier from Options.Weights — and sorts the slice in place
+// by descending score. With no opts it behaves exactly as the fixed-constant
 // version did; see model.Options for what can be tuned.
 func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userID string, opts ...model.Option) {
 	o := model.ApplyOptions(opts...)
 
 	for _, t := range candidates {
-		*t.GetWeight() = identityWeight(t, o)
+		w := identityWeight(t, o)
+		if personal, ok := o.Weights[t.GetID()]; ok && personal > 0 {
+			if w == 0 {
+				w = 1
+			}
+			w *= personal
+		}
+		*t.GetWeight() = w
 	}
 
 	model.Rankables[T](candidates).Sort(o)

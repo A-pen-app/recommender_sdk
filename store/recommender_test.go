@@ -113,3 +113,18 @@ func TestRecommendWatchDivisorAndCap(t *testing.T) {
 		t.Fatalf("cap not applied: capped=%v uncapped=%v", capped, uncapped)
 	}
 }
+
+func TestRecommendPersonalWeightsStackOnIdentity(t *testing.T) {
+	now := time.Unix(1_700_000_000, 0)
+	named := &item{id: "named", upvote: 10, createdAt: now.Unix() - 3600}
+	anon := &item{id: "anon", upvote: 10, createdAt: now.Unix() - 3600, anonymous: true}
+	s := &recommendStore[*item]{}
+	s.Recommend(context.Background(), []*item{named, anon}, "u", model.WithNow(now),
+		model.WithWeights(map[string]float64{"named": 0.5, "anon": 1.3, "missing": 9}))
+	if named.weight != 1 { // 2 × 0.5
+		t.Fatalf("named weight = %v, want 1", named.weight)
+	}
+	if anon.weight != 1.3 { // unweighted identity (0) × 1.3 → 1.3, not 0
+		t.Fatalf("anon weight = %v, want 1.3", anon.weight)
+	}
+}
