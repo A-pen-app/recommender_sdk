@@ -89,3 +89,27 @@ func TestRecommendIsStableOnTies(t *testing.T) {
 		}
 	}
 }
+
+func TestRecommendWatchDivisorAndCap(t *testing.T) {
+	now := time.Unix(1_700_000_000, 0)
+	watched := &item{id: "watched", watch: 7200, createdAt: now.Unix() - 3600, anonymous: true}
+	upvoted := &item{id: "upvoted", upvote: 2, createdAt: now.Unix() - 3600, anonymous: true}
+
+	// Default ÷86400: two hours of watch time is worth nothing.
+	if model.Score(watched, model.ApplyOptions(model.WithNow(now))) != 0 {
+		t.Fatal("7200s / 86400 should score 0 under defaults")
+	}
+
+	got := []*item{upvoted, watched}
+	s := &recommendStore[*item]{}
+	s.Recommend(context.Background(), got, "u", model.WithNow(now), model.WithWatchSecondsDivisor(3600))
+	if got[0].id != "watched" { // 2 watch points beat 2/2 = 1 upvote point
+		t.Fatalf("order = %v, want watched first with divisor 3600", ids(got))
+	}
+
+	capped := model.Score(watched, model.ApplyOptions(model.WithNow(now), model.WithWatchSecondsDivisor(3600), model.WithWatchScoreCap(1)))
+	uncapped := model.Score(watched, model.ApplyOptions(model.WithNow(now), model.WithWatchSecondsDivisor(3600)))
+	if capped >= uncapped || capped == 0 {
+		t.Fatalf("cap not applied: capped=%v uncapped=%v", capped, uncapped)
+	}
+}

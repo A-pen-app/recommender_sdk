@@ -44,14 +44,19 @@ func (a Rankables[T]) Sort(opts Options) {
 
 // Score is the hot-feed formula:
 //
-//	(upvote/UpvoteDivisor + comments + favorites + shares + watchDays)
+//	(upvote/UpvoteDivisor + comments + favorites + shares + watchPoints)
 //	  / (ageHours + 2)^2  × weight
 //
-// where weight is whatever GetWeight() holds (0 means unweighted).
+// where watchPoints = min(watchSeconds/WatchSecondsDivisor, WatchScoreCap)
+// (integer division, uncapped when WatchScoreCap is 0) and weight is whatever
+// GetWeight() holds (0 means unweighted).
 func Score(p Rankable, opts Options) float64 {
 	now := opts.Now().Unix()
-	totalWatchDays := p.GetTotalWatchSeconds() / 86400
-	engagement := float64(p.GetUpvote()/opts.UpvoteDivisor + p.GetCommentsCount() + p.GetFavoriteCount() + p.GetShareCount() + totalWatchDays)
+	watchPoints := float64(p.GetTotalWatchSeconds() / opts.WatchSecondsDivisor)
+	if opts.WatchScoreCap > 0 && watchPoints > opts.WatchScoreCap {
+		watchPoints = opts.WatchScoreCap
+	}
+	engagement := float64(p.GetUpvote()/opts.UpvoteDivisor+p.GetCommentsCount()+p.GetFavoriteCount()+p.GetShareCount()) + watchPoints
 	score := engagement / math.Pow(float64(now-p.GetCreatedAt())/3600+2, 2)
 	if w := p.GetWeight(); w != nil && *w != 0. {
 		score *= *w

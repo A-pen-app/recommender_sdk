@@ -18,6 +18,13 @@ type Options struct {
 	// replaces (does not stack on) NonAnonymousFactor, matching the historical
 	// behaviour. Historical value 4.
 	FemaleFactor float64
+	// WatchSecondsDivisor turns an item's total watch seconds into score points.
+	// Historical value 86400 (one point per full day of watch time, which in
+	// practice no post ever reaches).
+	WatchSecondsDivisor int
+	// WatchScoreCap bounds the watch points of a single item; 0 means no cap.
+	// Historically there was none.
+	WatchScoreCap float64
 
 	now time.Time
 }
@@ -26,18 +33,20 @@ type Options struct {
 type Option func(*Options)
 
 const (
-	defaultUpvoteDivisor      = 2
-	defaultNonAnonymousFactor = 2.
-	defaultFemaleFactor       = 4.
+	defaultUpvoteDivisor       = 2
+	defaultNonAnonymousFactor  = 2.
+	defaultFemaleFactor        = 4.
+	defaultWatchSecondsDivisor = 86400
 )
 
 // DefaultOptions returns the constants the formula used before they became
 // configurable.
 func DefaultOptions() Options {
 	return Options{
-		UpvoteDivisor:      defaultUpvoteDivisor,
-		NonAnonymousFactor: defaultNonAnonymousFactor,
-		FemaleFactor:       defaultFemaleFactor,
+		UpvoteDivisor:       defaultUpvoteDivisor,
+		NonAnonymousFactor:  defaultNonAnonymousFactor,
+		FemaleFactor:        defaultFemaleFactor,
+		WatchSecondsDivisor: defaultWatchSecondsDivisor,
 	}
 }
 
@@ -59,6 +68,12 @@ func ApplyOptions(opts ...Option) Options {
 	if o.FemaleFactor <= 0 {
 		o.FemaleFactor = defaultFemaleFactor
 	}
+	if o.WatchSecondsDivisor <= 0 {
+		o.WatchSecondsDivisor = defaultWatchSecondsDivisor
+	}
+	if o.WatchScoreCap < 0 {
+		o.WatchScoreCap = 0
+	}
 	if o.now.IsZero() {
 		o.now = time.Now()
 	}
@@ -76,6 +91,12 @@ func WithNonAnonymousFactor(f float64) Option {
 }
 
 func WithFemaleFactor(f float64) Option { return func(o *Options) { o.FemaleFactor = f } }
+
+// WithWatchSecondsDivisor sets how many watch seconds make one score point.
+func WithWatchSecondsDivisor(n int) Option { return func(o *Options) { o.WatchSecondsDivisor = n } }
+
+// WithWatchScoreCap bounds the watch points of one item; 0 removes the cap.
+func WithWatchScoreCap(cap float64) Option { return func(o *Options) { o.WatchScoreCap = cap } }
 
 // WithNow pins the reference time; tests use it, callers normally do not.
 func WithNow(t time.Time) Option { return func(o *Options) { o.now = t } }
