@@ -61,7 +61,6 @@ func TestRecommendUpvoteDivisorOption(t *testing.T) {
 	one := &item{id: "one-upvote", upvote: 1, createdAt: now.Unix() - 3600, anonymous: true}
 	zero := &item{id: "no-upvote", upvote: 0, createdAt: now.Unix() - 3600, anonymous: true}
 
-	// Historical ÷2: a single upvote is worth nothing, so the order is the stable input order.
 	s := &recommendStore[*item]{}
 	s.Recommend(context.Background(), []*item{zero, one}, "u", model.WithNow(now))
 	if model.Score(one, model.ApplyOptions(model.WithNow(now))) != 0 {
@@ -95,7 +94,6 @@ func TestRecommendWatchDivisorAndCap(t *testing.T) {
 	watched := &item{id: "watched", watch: 7200, createdAt: now.Unix() - 3600, anonymous: true}
 	upvoted := &item{id: "upvoted", upvote: 2, createdAt: now.Unix() - 3600, anonymous: true}
 
-	// Default ÷86400: two hours of watch time is worth nothing.
 	if model.Score(watched, model.ApplyOptions(model.WithNow(now))) != 0 {
 		t.Fatal("7200s / 86400 should score 0 under defaults")
 	}
@@ -103,7 +101,7 @@ func TestRecommendWatchDivisorAndCap(t *testing.T) {
 	got := []*item{upvoted, watched}
 	s := &recommendStore[*item]{}
 	s.Recommend(context.Background(), got, "u", model.WithNow(now), model.WithWatchSecondsDivisor(3600))
-	if got[0].id != "watched" { // 2 watch points beat 2/2 = 1 upvote point
+	if got[0].id != "watched" {
 		t.Fatalf("order = %v, want watched first with divisor 3600", ids(got))
 	}
 
