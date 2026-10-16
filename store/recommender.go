@@ -52,7 +52,14 @@ func (r *recommendStore[T]) Recommend(ctx context.Context, candidates []T, userI
 	o := model.ApplyOptions(opts...)
 
 	for _, t := range candidates {
-		*t.GetWeight() = identityWeight(t, o)
+		w := identityWeight(t, o)
+		if personal, ok := o.Weights[t.GetID()]; ok && personal > 0 {
+			if w == 0 {
+				w = 1
+			}
+			w *= personal
+		}
+		*t.GetWeight() = w
 	}
 
 	model.Rankables[T](candidates).Sort(o)

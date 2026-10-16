@@ -8,6 +8,7 @@ type Options struct {
 	FemaleFactor        float64
 	WatchSecondsDivisor int
 	WatchScoreCap       float64
+	Weights             map[string]float64
 
 	now time.Time
 }
@@ -71,5 +72,7 @@ func WithFemaleFactor(f float64) Option { return func(o *Options) { o.FemaleFact
 func WithWatchSecondsDivisor(n int) Option { return func(o *Options) { o.WatchSecondsDivisor = n } }
 
 func WithWatchScoreCap(cap float64) Option { return func(o *Options) { o.WatchScoreCap = cap } }
+
+func WithWeights(w map[string]float64) Option { return func(o *Options) { o.Weights = w } }
 
 func WithNow(t time.Time) Option { return func(o *Options) { o.now = t } }
