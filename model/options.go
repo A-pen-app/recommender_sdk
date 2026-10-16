@@ -3,9 +3,11 @@ package model
 import "time"
 
 type Options struct {
-	UpvoteDivisor      int
-	NonAnonymousFactor float64
-	FemaleFactor       float64
+	UpvoteDivisor       int
+	NonAnonymousFactor  float64
+	FemaleFactor        float64
+	WatchSecondsDivisor int
+	WatchScoreCap       float64
 
 	now time.Time
 }
@@ -13,16 +15,18 @@ type Options struct {
 type Option func(*Options)
 
 const (
-	defaultUpvoteDivisor      = 2
-	defaultNonAnonymousFactor = 2.
-	defaultFemaleFactor       = 4.
+	defaultUpvoteDivisor       = 2
+	defaultNonAnonymousFactor  = 2.
+	defaultFemaleFactor        = 4.
+	defaultWatchSecondsDivisor = 86400
 )
 
 func DefaultOptions() Options {
 	return Options{
-		UpvoteDivisor:      defaultUpvoteDivisor,
-		NonAnonymousFactor: defaultNonAnonymousFactor,
-		FemaleFactor:       defaultFemaleFactor,
+		UpvoteDivisor:       defaultUpvoteDivisor,
+		NonAnonymousFactor:  defaultNonAnonymousFactor,
+		FemaleFactor:        defaultFemaleFactor,
+		WatchSecondsDivisor: defaultWatchSecondsDivisor,
 	}
 }
 
@@ -42,6 +46,12 @@ func ApplyOptions(opts ...Option) Options {
 	if o.FemaleFactor <= 0 {
 		o.FemaleFactor = defaultFemaleFactor
 	}
+	if o.WatchSecondsDivisor <= 0 {
+		o.WatchSecondsDivisor = defaultWatchSecondsDivisor
+	}
+	if o.WatchScoreCap < 0 {
+		o.WatchScoreCap = 0
+	}
 	if o.now.IsZero() {
 		o.now = time.Now()
 	}
@@ -57,5 +67,9 @@ func WithNonAnonymousFactor(f float64) Option {
 }
 
 func WithFemaleFactor(f float64) Option { return func(o *Options) { o.FemaleFactor = f } }
+
+func WithWatchSecondsDivisor(n int) Option { return func(o *Options) { o.WatchSecondsDivisor = n } }
+
+func WithWatchScoreCap(cap float64) Option { return func(o *Options) { o.WatchScoreCap = cap } }
 
 func WithNow(t time.Time) Option { return func(o *Options) { o.now = t } }
