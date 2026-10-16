@@ -119,10 +119,10 @@ func TestRecommendPersonalWeightsStackOnIdentity(t *testing.T) {
 	s := &recommendStore[*item]{}
 	s.Recommend(context.Background(), []*item{named, anon}, "u", model.WithNow(now),
 		model.WithWeights(map[string]float64{"named": 0.5, "anon": 1.3, "missing": 9}))
-	if named.weight != 1 { // 2 × 0.5
+	if named.weight != 1 {
 		t.Fatalf("named weight = %v, want 1", named.weight)
 	}
-	if anon.weight != 1.3 { // unweighted identity (0) × 1.3 → 1.3, not 0
+	if anon.weight != 1.3 {
 		t.Fatalf("anon weight = %v, want 1.3", anon.weight)
 	}
 }
