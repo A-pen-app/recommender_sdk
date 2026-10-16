@@ -61,7 +61,6 @@ func TestRecommendUpvoteDivisorOption(t *testing.T) {
 	one := &item{id: "one-upvote", upvote: 1, createdAt: now.Unix() - 3600, anonymous: true}
 	zero := &item{id: "no-upvote", upvote: 0, createdAt: now.Unix() - 3600, anonymous: true}
 
-	// Historical ÷2: a single upvote is worth nothing, so the order is the stable input order.
 	s := &recommendStore[*item]{}
 	s.Recommend(context.Background(), []*item{zero, one}, "u", model.WithNow(now))
 	if model.Score(one, model.ApplyOptions(model.WithNow(now))) != 0 {
