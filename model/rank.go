@@ -20,11 +20,6 @@ type Rankable interface {
 
 type Rankables[T Rankable] []T
 
-// Sort orders the candidates by descending score under opts. Every item is
-// scored once against a single reference time and the sort is stable, so
-// equal scores keep their input order instead of the previous
-// sort.Sort-with-live-time.Now() behaviour, where two comparisons of the same
-// pair could disagree.
 func (a Rankables[T]) Sort(opts Options) {
 	scores := make([]float64, len(a))
 	for i, t := range a {
@@ -42,12 +37,6 @@ func (a Rankables[T]) Sort(opts Options) {
 	copy(a, sorted)
 }
 
-// Score is the hot-feed formula:
-//
-//	(upvote/UpvoteDivisor + comments + favorites + shares + watchDays)
-//	  / (ageHours + 2)^2  × weight
-//
-// where weight is whatever GetWeight() holds (0 means unweighted).
 func Score(p Rankable, opts Options) float64 {
 	now := opts.Now().Unix()
 	totalWatchDays := p.GetTotalWatchSeconds() / 86400
